@@ -1,7 +1,7 @@
 import React, {useContext, useState, useEffect, useRef} from "react";
 import "antd/dist/antd.css";
 import reactDom from "react-dom";
-import {Input, Table, Button, Icon, Popconfirm, Form} from "antd";
+import {Input, Table, Button, Icon, Popconfirm, Form, Checkbox} from "antd";
 import "./App.css";
 import EditableTable from "./components/edittable";
 
@@ -10,7 +10,7 @@ const EditableContext = React.createContext(null);
 const EditTableRow = ({index, ...props}) => {
   const [form] = Form.useForm();
   return(
-    <Form form={form} component="false">
+    <Form form={form} component={false}>
       <EditableContext.Provider value={form}>
         <tr {...props} />
       </EditableContext.Provider>
@@ -39,14 +39,14 @@ const EditableCell = ({
 
   const toggleEdit = () => {
     setEditing(!editing);
-    form.setFieldValue({
+    form.setFieldsValue({
       [dataIndex]: record[dataIndex],
     });
   };
 
   const save = async () => {
     try{
-      const values = await form.setFieldValue();
+      const values = await form.validateFields();
       toggleEdit();
       handleSave({...record, ...values});
     }catch(errInfo){
@@ -62,10 +62,10 @@ const EditableCell = ({
       style={{
         margin: 0,
       }} 
-      name="dataIndex" 
+      name={dataIndex}
       rules={[
         {
-        required: "true",
+        required: true,
         message: `${title} is required`,
         },
       ]}
@@ -88,7 +88,7 @@ const EditableCell = ({
 };
 
 class crudTable extends React.Component{
-  constructor (props){
+  constructor(props){
     super(props);
     this.columns =[
       {
@@ -119,16 +119,16 @@ class crudTable extends React.Component{
     this.state = {
       dataSource: [
         {
-          key: "0",
-          name:"Quốc 0",
-          age: "22",
-          address: "Sông Cầu"
-        },
-        {
           key: "1",
           name:"Quốc 1",
           age: "22",
           address: "Sông Cầu"
+        },
+        {
+          key: "2",
+          name:"Quốc 2",
+          age: "22",
+          address: "Sông Cầu 1"
         },
       ],
       count: 2,
@@ -146,7 +146,7 @@ class crudTable extends React.Component{
     const { count, dataSource } = this.state;
     const newData = {
       key: count,
-      name: `Quốc ${count}`,
+      name: `Quốc ${count + 1}`,
       age: "22",
       address: `Sông Cầu ${count}`,
     };
@@ -156,7 +156,7 @@ class crudTable extends React.Component{
     });
   };
    handleSave = (row) => {
-     const newData = [...this.data.dataSource];
+     const newData = [...this.state.dataSource];
      const index = newData.findIndex((item) => row.key === item.key);
      const item = newData[index];
      newData.splice(index, 1, {...item, ...row});
@@ -178,10 +178,10 @@ class crudTable extends React.Component{
       if(!col.editable){
         return col;
       }
-      return{
+      return {
         ...col,
         onCell: (record) => ({
-          ...col,
+          record,
           editable: col.editable,
           dataIndex: col.dataIndex,
           title: col.title,
@@ -189,6 +189,16 @@ class crudTable extends React.Component{
         }),
       };
      });
+
+     const onFinish = (values) => {
+      alert("Submit success" + JSON.stringify(values,null , 2));
+     }; 
+   
+     const onFinishFailed = (errorInfo) => {
+       alert("Submit false");
+     };
+
+
      return(
        <div>
         <Button 
@@ -204,8 +214,76 @@ class crudTable extends React.Component{
           rowClassName={() => "editable-row"}
           bordered
           dataSource={dataSource}
-               columns={columns}
+          columns={columns}
+          // pagination={{ pageSize: 5 }}
         />
+
+         <Form
+      name="basic"
+      labelCol={{
+        span: 4,
+      }}
+      wrapperCol={{
+        span: 16,
+      }}
+      initialValues={{
+        remember: true,
+      }}
+      onFinish={onFinish}
+      onFinishFailed={onFinishFailed}
+      autoComplete="off"
+    >
+      <Form.Item
+        label="Username"
+        name="username"
+        rules={[
+          {
+            required: true,
+            message: 'Please input your username!',
+          },
+        ]}
+      >
+        <Input />
+      </Form.Item>
+
+      <Form.Item
+        label="Password"
+        name="password"
+        rules={[
+          {
+            required: true,
+            message: 'Please input your password!',
+          },
+        ]}
+      >
+        <Input.Password />
+      </Form.Item>
+
+      <Form.Item
+        name="remember"
+        valuePropName="checked"
+        wrapperCol={{
+          offset: 4,
+          span: 16,
+        }}
+      >
+        <Checkbox>Remember me</Checkbox>
+      </Form.Item>
+
+      <Form.Item
+        wrapperCol={{
+          offset: 4,
+          span: 16,
+        }}
+      >
+        <Button type="primary" htmlType="submit">
+          Submit
+        </Button>
+      </Form.Item>
+    </Form> 
+        
+        <EditableTable/>
+        {/* <Demo/> */}
        </div>
      );
    }
